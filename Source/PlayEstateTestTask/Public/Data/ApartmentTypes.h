@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "ApartmentTypes.generated.h"
 
+
 UENUM(BlueprintType)
 enum class EApartmentStatus : uint8
 {
@@ -10,9 +11,8 @@ enum class EApartmentStatus : uint8
 	Sold UMETA(DisplayName = "Sold")
 };
 
-// Удобная функция для UI.
-// Возвращает человекочитаемый статус на русском.
-inline FString ApartmentStatusToString(EApartmentStatus Status)
+// Возвращает статус на русском языке
+inline FString ApartmentStatusToString(const EApartmentStatus Status)
 {
 	switch (Status)
 	{
@@ -29,7 +29,7 @@ USTRUCT(BlueprintType)
 struct FApartmentData
 {
 	GENERATED_BODY()
-
+	
 	// Уникальный идентификатор квартиры.
 	UPROPERTY(BlueprintReadOnly)
 	FString Id;
@@ -42,13 +42,11 @@ struct FApartmentData
 	UPROPERTY(BlueprintReadOnly)
 	float Area = 0.f;
 
-	// Точка фокуса камеры из JSON.
-	// Хранится уже в единицах Unreal, обычно сантиметры.
+	// Точка фокуса камеры.
 	UPROPERTY(BlueprintReadOnly)
 	FVector FocusPoint = FVector::ZeroVector;
 
 	// Номер этажа, на котором находится квартира.
-	// Дублируем сюда для удобства поиска и отладки.
 	UPROPERTY(BlueprintReadOnly)
 	int32 FloorNumber = INDEX_NONE;
 };
@@ -57,7 +55,7 @@ USTRUCT(BlueprintType)
 struct FFloorData
 {
 	GENERATED_BODY()
-
+	
 	// Номер этажа.
 	UPROPERTY(BlueprintReadOnly)
 	int32 FloorNumber = INDEX_NONE;
