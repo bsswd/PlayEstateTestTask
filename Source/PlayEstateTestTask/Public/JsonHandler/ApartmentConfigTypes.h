@@ -44,7 +44,7 @@ struct FFloorData
 };
 
 USTRUCT(BlueprintType)
-struct FApartmentConfig
+struct FBuildingConfig
 {
 	GENERATED_BODY()
 

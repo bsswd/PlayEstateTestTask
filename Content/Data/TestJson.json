@@ -1,16 +1,16 @@
 {
   "Floors": [
     {
-      "FloorLevel": 1,
+      "FloorNumber": 1,
       "Apartments": [
-        { "ID": 101, "Status": "Free", "Area": 45.5, "CameraFocus": {"x": 100, "y": 200, "z": 150} },
+        { "ID": 101, "Status": "Sold", "Area": 45.5, "CameraFocus": {"x": 100, "y": 200, "z": 150} },
         { "ID": 102, "Status": "Sold", "Area": 52.0, "CameraFocus": {"x": 200, "y": 200, "z": 150} },
         { "ID": 103, "Status": "Free", "Area": 48.2, "CameraFocus": {"x": 300, "y": 200, "z": 150} },
         { "ID": 104, "Status": "Free", "Area": 60.0, "CameraFocus": {"x": 400, "y": 200, "z": 150} }
       ]
     },
     {
-      "FloorLevel": 2,
+      "FloorNumber": 2,
       "Apartments": [
         { "ID": 201, "Status": "Sold", "Area": 45.5, "CameraFocus": {"x": 100, "y": 200, "z": 450} },
         { "ID": 202, "Status": "Free", "Area": 52.0, "CameraFocus": {"x": 200, "y": 200, "z": 450} },
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "FloorLevel": 3,
+      "FloorNumber": 3,
       "Apartments": [
         { "ID": 301, "Status": "Free", "Area": 45.5, "CameraFocus": {"x": 100, "y": 200, "z": 750} },
         { "ID": 302, "Status": "Free", "Area": 52.0, "CameraFocus": {"x": 200, "y": 200, "z": 750} },
@@ -28,7 +28,7 @@
       ]
     },
     {
-      "FloorLevel": 4,
+      "FloorNumber": 4,
       "Apartments": [
         { "ID": 401, "Status": "Sold", "Area": 45.5, "CameraFocus": {"x": 100, "y": 200, "z": 1050} },
         { "ID": 402, "Status": "Sold", "Area": 52.0, "CameraFocus": {"x": 200, "y": 200, "z": 1050} },
@@ -37,7 +37,7 @@
       ]
     },
     {
-      "FloorLevel": 5,
+      "FloorNumber": 5,
       "Apartments": [
         { "ID": 501, "Status": "Free", "Area": 90.0, "CameraFocus": {"x": 100, "y": 200, "z": 1350} },
         { "ID": 502, "Status": "Sold", "Area": 90.0, "CameraFocus": {"x": 200, "y": 200, "z": 1350} },
