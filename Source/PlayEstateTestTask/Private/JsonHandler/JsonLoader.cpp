@@ -1,4 +1,4 @@
-﻿// Test task for PlayEstate company.
+﻿// Test task for Playestate.
 
 
 #include "PlayEstateTestTask/Public/JsonHandler/JsonLoader.h"
