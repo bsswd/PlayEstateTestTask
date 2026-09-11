@@ -62,7 +62,7 @@ void ACameraPawn::BeginPlay()
     ApplyCamera();
 }
 
-void ACameraPawn::AutomaticFlight(float DeltaTime)
+void ACameraPawn::Transition(float DeltaTime)
 {
     TransitionTime += DeltaTime;
 
@@ -95,7 +95,7 @@ void ACameraPawn::Tick(float DeltaTime)
 
     if (bTransitioning)
     {
-        AutomaticFlight(DeltaTime);
+        Transition(DeltaTime);
         return;
     }
 

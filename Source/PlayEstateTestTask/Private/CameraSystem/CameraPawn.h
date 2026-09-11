@@ -88,7 +88,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
-    void AutomaticFlight(float DeltaTime);
+    void Transition(float DeltaTime);
 
     void ApplyCamera();
     void ClampView(FCameraView& View) const;
