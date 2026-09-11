@@ -58,7 +58,7 @@ void UJsonLoader::ExecuteLoading()
             }
  
             FFloorData Floor;
-            if (!FObj->TryGetNumberField(TEXT("FloorNumber"), Floor.FloorNumber))
+            if (!FObj->TryGetNumberField(TEXT("FloorNumber"), Floor.FloorLevel))
             {
                 DiagnosticLogs.Add(FString::Printf(TEXT("Этаж [%d]: Отсутствует номер FloorLevel."), f));
             }
@@ -76,7 +76,7 @@ void UJsonLoader::ExecuteLoading()
                     // Валидация ID
                     if (!ApartmentObj->TryGetNumberField(TEXT("ID"), ApartmentData.ID))
                     {
-                        DiagnosticLogs.Add(FString::Printf(TEXT("Этаж %d: Пропущена квартира в индексе [%d] (отсутствует ID)."), Floor.FloorNumber, Iterator));
+                        DiagnosticLogs.Add(FString::Printf(TEXT("Этаж %d: Пропущена квартира в индексе [%d] (отсутствует ID)."), Floor.FloorLevel, Iterator));
                         continue;
                     }
  

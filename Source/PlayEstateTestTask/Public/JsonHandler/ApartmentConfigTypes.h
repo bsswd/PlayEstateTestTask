@@ -37,7 +37,7 @@ struct FFloorData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor", meta = (ClampMin = 1, ClampMax = 100, UIMin = 1, UIMax = 100))
-	int32 FloorNumber = 1;
+	int32 FloorLevel = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor")
 	TArray<FApartmentData> Apartments;
