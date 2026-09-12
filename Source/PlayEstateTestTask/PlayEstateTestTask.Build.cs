@@ -17,6 +17,8 @@ public class PlayEstateTestTask : ModuleRules
 				"EnhancedInput",
 				"Json",
 				"JsonUtilities",
+				"UMG",
+				"FieldNotification"
 			});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
