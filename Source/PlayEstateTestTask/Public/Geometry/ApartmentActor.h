@@ -87,7 +87,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Interaction")
     bool bInteractionEnabled = true;
 
-    // Обработчки клика и ховера.
+    // Обработчики клика и ховера.
     UFUNCTION()
     void HandleMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 

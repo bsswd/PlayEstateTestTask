@@ -4,6 +4,7 @@
 #include "UI/ActionButtonWidget.h"
 #include "UI/ApartmentCardWidget.h"
 #include "Components/VerticalBox.h"
+#include "Components/CheckBox.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogMainWidget, Log, All);
 
@@ -20,6 +21,14 @@ void UMainWidget::NativeConstruct()
     BackButton->OnActionButtonClicked.RemoveDynamic(this, &UMainWidget::HandleBackClicked);
     BackButton->OnActionButtonClicked.AddDynamic(this, &UMainWidget::HandleBackClicked);
     BackButton->SetupButton(INVTEXT("Назад"), 0);
+    
+    if (!HideSoldCheckBox)
+    {
+        UE_LOG(LogMainWidget, Error, TEXT("HideSoldCheckBox is NULL. Проверь имя в Blueprint"));
+    }
+    
+    HideSoldCheckBox->OnCheckStateChanged.RemoveDynamic(this, &UMainWidget::HandleFilterCheckChanged);
+    HideSoldCheckBox->OnCheckStateChanged.AddDynamic(this, &UMainWidget::HandleFilterCheckChanged);
 
     HideApartmentCard();
 }
@@ -75,6 +84,11 @@ void UMainWidget::HandleFloorButtonClicked(int32 FloorNumber)
 void UMainWidget::HandleBackClicked(int32 Context)
 {
     OnBackRequested.Broadcast();
+}
+
+void UMainWidget::HandleFilterCheckChanged(bool bChecked)
+{
+    OnFilterChanged.Broadcast(bChecked);
 }
 
 void UMainWidget::ShowApartmentCard(const FApartmentData& InApartment)

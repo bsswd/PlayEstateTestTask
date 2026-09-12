@@ -14,6 +14,7 @@ class UApartmentCardWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFloorSelected, int32, FloorLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBackRequested);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFilterChanged, bool, bHideSold);
 
 /**
  * Главный виджет, который изменяется в зависимости от режима просмотра.
@@ -30,6 +31,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnBackRequested OnBackRequested;
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnFilterChanged OnFilterChanged;
 
 	// Класс универсальной кнопки (назначается в Blueprint).
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -59,12 +63,19 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UApartmentCardWidget* ApartmentCard;
 	
+	// Чекбокс скрыть проданные
+	UPROPERTY(meta = (BindWidget))
+	class UCheckBox* HideSoldCheckBox;
+	
 	
 	UFUNCTION()
 	void HandleFloorButtonClicked(int32 FloorNumber);
 
 	UFUNCTION()
 	void HandleBackClicked(int32 Context);
+	
+	UFUNCTION()
+	void HandleFilterCheckChanged(bool bChecked);
 
 	
 	virtual void NativeConstruct() override;

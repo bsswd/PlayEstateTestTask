@@ -43,8 +43,12 @@ protected:
 	UFUNCTION()
 	void HandleApartmentClickedIn3D(FApartmentData Apartment, bool bIsSelected);
 	
+	UFUNCTION()
+	void HandleFilterChanged(bool bHideSold);
+	
 	void SpawnApartments();
 	void SetupUI();
+	void UpdateApartmentInteraction();
 	
 	virtual void BeginPlay() override;
 
@@ -55,6 +59,8 @@ private:
 	
 	UPROPERTY()
 	TArray<AApartmentActor*> SpawnedApartments;
+	
+	bool bHideSoldFilterActive = false;
 	
 	ACameraPawn* GetCameraPawn() const;
 	FVector ComputeFloorTarget(int32 FloorLevel) const;	

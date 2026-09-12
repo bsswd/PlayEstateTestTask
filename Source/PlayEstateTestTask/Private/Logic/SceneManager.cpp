@@ -131,6 +131,8 @@ void ASceneManager::SpawnApartments()
             Camera->SetBuildingView(BuildingCenter, BuildingRadius);
         }
     }
+	
+	UpdateApartmentInteraction();
 }
 
 void ASceneManager::SetupUI()
@@ -156,9 +158,30 @@ void ASceneManager::SetupUI()
 
 	MainWidget->OnFloorSelected.AddDynamic(this, &ASceneManager::HandleFloorSelected);
 	MainWidget->OnBackRequested.AddDynamic(this, &ASceneManager::HandleBackRequested);
+	MainWidget->OnFilterChanged.AddDynamic(this, &ASceneManager::HandleFilterChanged);
 }
 
+void ASceneManager::UpdateApartmentInteraction()
+{
+	ACameraPawn* Camera = GetCameraPawn();
+	const ECameraMode Mode = Camera ? Camera->GetCameraMode() : ECameraMode::Genplan;
+	const bool bInGenplan = (Mode == ECameraMode::Genplan);
 
+	for (AApartmentActor* Apartment : SpawnedApartments)
+	{
+		if (!Apartment) continue;
+
+		const FApartmentData Data = Apartment->GetData();
+		const bool bIsSold = (Data.Status == EApartmentStatus::Sold);
+
+		// Визуальное "скрытие" — всегда применяется, если фильтр включён и квартира продана
+		Apartment->SetFilteredOut(bHideSoldFilterActive && bIsSold);
+
+		// Интерактивность: выключена в Genplan И для отфильтрованных квартир
+		const bool bShouldBeInteractive = !bInGenplan && !(bHideSoldFilterActive && bIsSold);
+		Apartment->SetInteractionEnabled(bShouldBeInteractive);
+	}
+}
 
 void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 {
@@ -172,7 +195,7 @@ void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 	if (ACameraPawn* Camera = GetCameraPawn())
 	{
 		const FVector FloorTarget = ComputeFloorTarget(FloorLevel);
-		Camera->EnterFloor(FloorTarget, 3000.f, -30.f);
+		Camera->EnterFloor(FloorTarget, 1000.f, 0.f);
 	}
 }
 
@@ -223,6 +246,12 @@ void ASceneManager::HandleApartmentClickedIn3D(FApartmentData Apartment, bool bI
 			MainWidget->HideApartmentCard();
 		}
 	}
+}
+
+void ASceneManager::HandleFilterChanged(bool bHideSold)
+{
+	bHideSoldFilterActive = bHideSold;
+	UpdateApartmentInteraction();
 }
 
 ACameraPawn* ASceneManager::GetCameraPawn() const
