@@ -1,7 +1,7 @@
 ﻿//  Test task for Playestate.
 
 
-#include "CameraPawn.h"
+#include "CameraSystem/CameraPawn.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
 

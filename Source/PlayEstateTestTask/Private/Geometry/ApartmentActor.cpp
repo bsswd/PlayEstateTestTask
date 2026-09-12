@@ -46,11 +46,11 @@ void AApartmentActor::BeginPlay()
 
 void AApartmentActor::Initialize(const FApartmentData& InData)
 {
-    Data = InData;
+    ApartmentData = InData;
 
-    if (bUseFocusPointAsActorLocation && !Data.CameraFocus.IsNearlyZero())
+    if (bUseFocusPointAsActorLocation && !ApartmentData.CameraFocus.IsNearlyZero())
     {
-        SetActorLocation(Data.CameraFocus);
+        SetActorLocation(ApartmentData.CameraFocus);
     }
 
     ApplyScale();
@@ -60,17 +60,17 @@ void AApartmentActor::Initialize(const FApartmentData& InData)
 
 FApartmentData AApartmentActor::GetApartmentData() const
 {
-    return Data;
+    return ApartmentData;
 }
 
 void AApartmentActor::SetStatus(EApartmentStatus NewStatus)
 {
-    if (Data.Status == NewStatus)
+    if (ApartmentData.Status == NewStatus)
     {
         return;
     }
 
-    Data.Status = NewStatus;
+    ApartmentData.Status = NewStatus;
     RefreshVisual();
 }
 
@@ -111,6 +111,17 @@ void AApartmentActor::SetInteractionEnabled(bool bEnabled)
     }
 }
 
+void AApartmentActor::SetFilteredOut(bool bFiltered)
+{
+    if (bFilteredOut == bFiltered)
+    {
+        return;
+    }
+
+    bFilteredOut = bFiltered;
+    RefreshVisual();
+}
+
 void AApartmentActor::RefreshVisual()
 {
     if (!DynamicMaterial)
@@ -123,14 +134,24 @@ void AApartmentActor::RefreshVisual()
         return;
     }
 
-    const bool bSold = Data.Status == EApartmentStatus::Sold;
+    static const FName BaseColorName(TEXT("BaseColor"));
+    static const FName EmissiveColorName(TEXT("EmissiveColor"));
+    static const FName EmissiveStrengthName(TEXT("EmissiveStrength"));
+
+    if (bFilteredOut)
+    {
+        DynamicMaterial->SetVectorParameterValue(BaseColorName, FLinearColor(0.05f, 0.05f, 0.05f));
+        DynamicMaterial->SetVectorParameterValue(EmissiveColorName, FLinearColor::Black);
+        DynamicMaterial->SetScalarParameterValue(EmissiveStrengthName, 0.f);
+        return;
+    }
+
+    const bool bSold = ApartmentData.Status == EApartmentStatus::Sold;
 
     FLinearColor BaseColor = bSold ? SoldColor : FreeColor;
-
     FLinearColor EmissiveColor = FLinearColor::Black;
     float EmissiveStrength = 0.f;
 
-    // Сначала hover, но если квартира выбрана, то selected.
     if (bHovered)
     {
         EmissiveColor = HoverEmissive;
@@ -142,10 +163,6 @@ void AApartmentActor::RefreshVisual()
         EmissiveColor = SelectedEmissive;
         EmissiveStrength = SelectedEmissiveStrength;
     }
-
-    static const FName BaseColorName(TEXT("BaseColor"));
-    static const FName EmissiveColorName(TEXT("EmissiveColor"));
-    static const FName EmissiveStrengthName(TEXT("EmissiveStrength"));
 
     DynamicMaterial->SetVectorParameterValue(BaseColorName, BaseColor);
     DynamicMaterial->SetVectorParameterValue(EmissiveColorName, EmissiveColor);
@@ -192,9 +209,9 @@ void AApartmentActor::ApplyScale()
     // поэтому масштаб равен примерно стороне в метрах.
     float SideMeters = 3.f;
 
-    if (Data.Area > 0.f)
+    if (ApartmentData.Area > 0.f)
     {
-        SideMeters = FMath::Sqrt(Data.Area);
+        SideMeters = FMath::Sqrt(ApartmentData.Area);
     }
 
     SideMeters = FMath::Max(SideMeters, 1.f);
@@ -223,7 +240,7 @@ void AApartmentActor::HandleMeshClicked(UPrimitiveComponent* TouchedComponent, F
     }
 
     SetSelected(!bSelected);
-    OnApartmentClicked.Broadcast(Data, bSelected);
+    OnApartmentClicked.Broadcast(ApartmentData, bSelected);
 }
 
 void AApartmentActor::HandleMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent)

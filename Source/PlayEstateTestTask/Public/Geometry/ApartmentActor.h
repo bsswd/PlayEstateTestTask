@@ -22,20 +22,18 @@ class AApartmentActor : public AActor
 
 public:
     AApartmentActor();
+    
+    // Событие для контроллера, камеры, UI и.т.д...
+    UPROPERTY(BlueprintAssignable, Category = "Apartment")
+    FOnApartmentClicked OnApartmentClicked;
 
+    
     // Инициализация.
     UFUNCTION(BlueprintCallable)
     void Initialize(const FApartmentData& InData);
 
-    // Для Blueprint.
     UFUNCTION(BlueprintCallable)
     FApartmentData GetApartmentData() const;
-
-    // Для C++.
-    const FApartmentData& GetData() const
-    {
-        return Data;
-    }
 
     UFUNCTION(BlueprintCallable)
     void SetStatus(EApartmentStatus NewStatus);
@@ -48,35 +46,24 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void SetInteractionEnabled(bool bEnabled);
+    
+    UFUNCTION(BlueprintCallable)
+    void SetFilteredOut(bool bFiltered);
 
     UFUNCTION(BlueprintCallable)
     void RefreshVisual();
     
-    // Событие для контроллера, камеры, UI и.т.д...
-    UPROPERTY(BlueprintAssignable, Category = "Apartment")
-    FOnApartmentClicked OnApartmentClicked;
+    
+    const FApartmentData& GetData() const  {return ApartmentData;}
 
+    
 protected:
-    virtual void BeginPlay() override;
-
-    UFUNCTION()
-    void HandleMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
-
-    UFUNCTION()
-    void HandleMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent);
-
-    UFUNCTION()
-    void HandleMeshEndCursorOver(UPrimitiveComponent* TouchedComponent);
-
-    void CreateDynamicMaterial();
-    void ApplyScale();
-
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> Mesh;
 
     // Данные квартиры.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
-    FApartmentData Data;
+    FApartmentData ApartmentData;
 
     // Если включено, актер поставит себя в FocusPoint из JSON.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
@@ -86,7 +73,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
     bool bAutoScaleByArea = true;
 
-    // Высота куба квартиры в сантиметрах.
+    // Высота куба.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
     float ApartmentHeight = 250.f;
 
@@ -116,10 +103,28 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Interaction")
     bool bInteractionEnabled = true;
 
+    
+    UFUNCTION()
+    void HandleMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
+
+    UFUNCTION()
+    void HandleMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent);
+
+    UFUNCTION()
+    void HandleMeshEndCursorOver(UPrimitiveComponent* TouchedComponent);
+
+    
+    void CreateDynamicMaterial();
+    void ApplyScale();
+
+    virtual void BeginPlay() override;
+
+    
 private:
     UPROPERTY()
     TObjectPtr<UMaterialInstanceDynamic> DynamicMaterial;
 
     bool bSelected = false;
     bool bHovered = false;
+    bool bFilteredOut = false;
 };
