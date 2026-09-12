@@ -163,4 +163,5 @@ private:
     
     bool bTransitioning = false;
     bool bHasInitialBuildingView = false;
+    bool bHasDoneFirstView = false;
 };

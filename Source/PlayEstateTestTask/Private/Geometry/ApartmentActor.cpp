@@ -42,11 +42,6 @@ void AApartmentActor::Initialize(const FApartmentData& InData)
 {
     ApartmentData = InData;
 
-    if (!ApartmentData.CameraFocus.IsNearlyZero())
-    {
-        SetActorLocation(ApartmentData.CameraFocus);
-    }
-
     ApplyScale();
     CreateDynamicMaterial();
     RefreshVisual();

@@ -62,6 +62,7 @@ void ACameraPawn::BeginPlay()
     GenplanView = CurrentView;
 
     ApplyCamera();
+    bHasDoneFirstView = true; 
 }
 
 void ACameraPawn::Transition(float DeltaTime)
@@ -70,7 +71,9 @@ void ACameraPawn::Transition(float DeltaTime)
 
     const float Duration = FMath::Max(TransitionDuration, 0.05f);
     const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
-    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 0.f);
+
+    // ИСПРАВЛЕНО: экспонента 2.f для плавного ease-in/out
+    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 2.f);
 
     CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
     CurrentView.Distance = FMath::Lerp(StartView.Distance, TargetView.Distance, Alpha);
@@ -119,10 +122,22 @@ void ACameraPawn::SetBuildingView(const FVector& Center, float Distance)
     GenplanView.TargetPoint = BuildingCenter;
     GenplanView.Distance = BuildingDistance;
 
+    // ИСПРАВЛЕНО: если это первый вызов (история пуста) — просто ставим без прыжка.
+    // Если пользователь уже взаимодействовал — плавно перелетаем.
     if (!bTransitioning && CurrentMode == ECameraMode::Genplan)
     {
-        CurrentView = GenplanView;
-        ApplyCamera();
+        if (History.Num() == 0 && !bHasDoneFirstView)
+        {
+            // Первый запуск — мгновенно встаём на позицию без анимации.
+            CurrentView = GenplanView;
+            ApplyCamera();
+            bHasDoneFirstView = true;
+        }
+        else
+        {
+            // Повторный вызов — плавный переход.
+            EnterGenplan();
+        }
     }
 }
 

@@ -55,49 +55,82 @@ void ASceneManager::HandleJsonLoaded(const FBuildingConfig& Config, const TArray
 
 void ASceneManager::SpawnApartments()
 {
-	UWorld* World = GetWorld();
-	
-	if (!World)
-	{
-		return;
-	}
-	
-	if (!ApartmentActorClass)
-	{
-		UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set"));
-		return;
-	}
+    if (!ApartmentActorClass)
+    {
+        UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set"));
+        return;
+    }
 
-	SpawnedApartments.Empty();
+    UWorld* World = GetWorld();
+    if (!World) return;
 
-	for (const FFloorData& Floor : BuildingConfig.Floors)
-	{
-		for (const FApartmentData& Apartment : Floor.Apartments)
-		{
-			FVector SpawnLocation = Apartment.CameraFocus;
-			FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
+    SpawnedApartments.Empty();
 
-			AApartmentActor* Actor = World->SpawnActorDeferred<AApartmentActor>(
-				ApartmentActorClass,
-				SpawnTransform,
-				this,
-				nullptr,
-				ESpawnActorCollisionHandlingMethod::AlwaysSpawn
-			);
+    // Настройки размещения
+    const float FloorHeightSpacing = 400.f;  // Высота между этажами (4 метра)
+    const float ApartmentSpacing = 600.f;     // Расстояние между квартирами (6 метров)
+    const float BaseFloorZ = 200.f;           // Высота первого этажа
 
-			if (Actor)
-			{
-				Actor->Initialize(Apartment);
-				Actor->FinishSpawning(SpawnTransform);
+    for (int32 FloorIndex = 0; FloorIndex < BuildingConfig.Floors.Num(); ++FloorIndex)
+    {
+        const FFloorData& Floor = BuildingConfig.Floors[FloorIndex];
+        const float FloorZ = BaseFloorZ + FloorIndex * FloorHeightSpacing;
 
-				Actor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClickedIn3D);
+        // Размещаем квартиры сеткой 2x2 (или в ряд, если больше)
+        const float NumApartments = Floor.Apartments.Num();
+        const int32 GridSize = FMath::CeilToInt(FMath::Sqrt(NumApartments));
 
-				SpawnedApartments.Add(Actor);
-			}
-		}
-	}
+        for (int32 AptIndex = 0; AptIndex < NumApartments; ++AptIndex)
+        {
+            const FApartmentData& Apartment = Floor.Apartments[AptIndex];
 
-	UE_LOG(LogSceneManager, Warning, TEXT("Spawned %d apartments"), SpawnedApartments.Num());
+            // Вычисляем позицию в сетке
+            const int32 Row = AptIndex / GridSize;
+            const int32 Col = AptIndex % GridSize;
+
+            // Центрируем сетку
+            const float OffsetX = (Col - (GridSize - 1) * 0.5f) * ApartmentSpacing;
+            const float OffsetY = (Row - (GridSize - 1) * 0.5f) * ApartmentSpacing;
+
+            FVector SpawnLocation(OffsetX, OffsetY, FloorZ);
+            FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
+
+            AApartmentActor* Actor = World->SpawnActorDeferred<AApartmentActor>(
+                ApartmentActorClass,
+                SpawnTransform,
+                this,
+                nullptr,
+                ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+            );
+
+            if (Actor)
+            {
+                Actor->Initialize(Apartment);
+                Actor->FinishSpawning(SpawnTransform);
+                Actor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClickedIn3D);
+                SpawnedApartments.Add(Actor);
+            }
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("Spawned %d apartments procedurally"), SpawnedApartments.Num());
+
+    // Центрируем камеру на здании
+    if (SpawnedApartments.Num() > 0)
+    {
+        FVector BuildingCenter = FVector::ZeroVector;
+        for (AApartmentActor* Apt : SpawnedApartments)
+        {
+            BuildingCenter += Apt->GetActorLocation();
+        }
+        BuildingCenter /= SpawnedApartments.Num();
+
+        if (ACameraPawn* Camera = GetCameraPawn())
+        {
+            const float BuildingRadius = 4000.f;
+            Camera->SetBuildingView(BuildingCenter, BuildingRadius);
+        }
+    }
 }
 
 void ASceneManager::SetupUI()
@@ -162,9 +195,20 @@ void ASceneManager::HandleApartmentClickedIn3D(FApartmentData Apartment, bool bI
 {
 	if (bIsSelected)
 	{
-		if (ACameraPawn* Camera = GetCameraPawn())
+		AApartmentActor* TargetActor = nullptr;
+		for (AApartmentActor* Actor : SpawnedApartments)
 		{
-			Camera->EnterApartment(Apartment.CameraFocus, 1200.f, -20.f);
+			if (Actor && Actor->GetData().ID == Apartment.ID)
+			{
+				TargetActor = Actor;
+				break;
+			}
+		}
+
+		if (ACameraPawn* CameraPawn = Cast<ACameraPawn>(GetCameraPawn()); TargetActor && CameraPawn)
+		{
+			const FVector FocusPoint = TargetActor->GetActorLocation();
+			CameraPawn->EnterApartment(FocusPoint, 1200.f, -20.f);
 		}
 
 		if (MainWidget)
