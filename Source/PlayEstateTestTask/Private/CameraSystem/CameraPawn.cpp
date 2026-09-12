@@ -35,7 +35,6 @@ void ACameraPawn::PossessedBy(AController* NewController)
     }
 
     PlayerController->SetViewTarget(this);
-    PlayerController->bShowMouseCursor = true;
 
     FInputModeGameAndUI InputMode;
     PlayerController->SetInputMode(InputMode);

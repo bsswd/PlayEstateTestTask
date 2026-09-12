@@ -4,7 +4,6 @@
 #include "Geometry/ApartmentActor.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
-#include "WorldPartition/ContentBundle/ContentBundleLog.h"
 
 
 AApartmentActor::AApartmentActor()
@@ -15,9 +14,7 @@ AApartmentActor::AApartmentActor()
     SetRootComponent(Mesh);
 
     // Стандартный куб.
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshFinder(
-        TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'")
-    );
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshFinder(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 
     if (CubeMeshFinder.Succeeded())
     {
