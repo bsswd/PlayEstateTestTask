@@ -13,7 +13,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ApartmentActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnApartmentClicked, FApartmentData, ApartmentData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnApartmentClicked, FApartmentData, ApartmentData, bool, bIsSelected);
 
 UCLASS()
 class AApartmentActor : public AActor

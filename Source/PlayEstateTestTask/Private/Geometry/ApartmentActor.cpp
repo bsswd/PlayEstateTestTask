@@ -222,8 +222,8 @@ void AApartmentActor::HandleMeshClicked(UPrimitiveComponent* TouchedComponent, F
         return;
     }
 
-    SetSelected(true);
-    OnApartmentClicked.Broadcast(Data);
+    SetSelected(!bSelected);
+    OnApartmentClicked.Broadcast(Data, bSelected);
 }
 
 void AApartmentActor::HandleMeshBeginCursorOver(UPrimitiveComponent* TouchedComponent)

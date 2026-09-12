@@ -47,6 +47,17 @@ struct FCameraHistoryEntry
     FCameraView View;
 };
 
+/*
+*   Класс предназначен для управления камерой.
+*   
+*   В режиме Генплана можно совершать облет здания и перемещаться вверх и вниз. Здесь же находится и логика управления.
+*   Свободная камера не используется,
+*   так как приложением могут пользоваться люди незнакомые с классическим WASD + Мышь (как в играх)
+*   в UI будет подробная подсказка какие клавиши нажимать для конкретных действий.
+*   
+*   Переходы в режим этажа и режим квартиры совершаются автоматически. В этих режимах управление камерой клавишами заблокировано.  
+*/
+
 UCLASS()
 class ACameraPawn : public APawn
 {
@@ -62,7 +73,7 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetBuildingView(const FVector& Center, float Distance);
 
-    // Перейти в Genplan.
+    // Перейти к генплану.
     UFUNCTION(BlueprintCallable)
     void EnterGenplan();
 
@@ -74,7 +85,7 @@ public:
     UFUNCTION(BlueprintCallable)
     void EnterApartment(const FVector& FocusPoint, float Distance, float Pitch);
 
-    // Назад.
+    // Переход на шаг назад.
     UFUNCTION(BlueprintCallable)
     void GoBack();
 
