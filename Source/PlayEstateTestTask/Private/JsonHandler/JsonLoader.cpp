@@ -1,8 +1,6 @@
 ﻿// Test task for Playestate.
 
-
 #include "PlayEstateTestTask/Public/JsonHandler/JsonLoader.h"
-
 
 UJsonLoader* UJsonLoader::LoadBuildingConfigAsync(UObject* WorldContextObject, FString FileName)
 {
@@ -58,7 +56,7 @@ void UJsonLoader::ExecuteLoading()
             }
  
             FFloorData Floor;
-            if (!FObj->TryGetNumberField(TEXT("FloorNumber"), Floor.FloorLevel))
+            if (!FObj->TryGetNumberField(TEXT("FloorLevel"), Floor.FloorLevel))
             {
                 DiagnosticLogs.Add(FString::Printf(TEXT("Этаж [%d]: Отсутствует номер FloorLevel."), f));
             }

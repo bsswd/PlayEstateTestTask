@@ -1,6 +1,5 @@
 ﻿//  Test task for Playestate.
 
-
 #include "UI/MainWidget.h"
 #include "UI/ActionButtonWidget.h"
 #include "UI/ApartmentCardWidget.h"
@@ -33,6 +32,9 @@ void UMainWidget::Setup(const FBuildingConfig& InConfig)
 
 void UMainWidget::RebuildFloorsPanel()
 {
+    UE_LOG(LogMainWidget, Warning, TEXT("Start rebuild floor panels"));
+    
+    
     if (!FloorPanel)
     {
         UE_LOG(LogMainWidget, Error, TEXT("FloorPanel is not set"));
@@ -43,7 +45,7 @@ void UMainWidget::RebuildFloorsPanel()
 
     if (!ActionButtonClass)
     {
-        UE_LOG(LogTemp, Error, TEXT("ActionButtonClass is not set"));
+        UE_LOG(LogMainWidget, Error, TEXT("ActionButtonClass is not set"));
         return;
     }
 

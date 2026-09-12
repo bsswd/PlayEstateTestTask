@@ -10,7 +10,6 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FJsonLoaderDelegate, const FBuildingConfig&, Config,
 																	const TArray<FString>&, ErrorMessages);
 
-
 UCLASS()
 class PLAYESTATETESTTASK_API UJsonLoader : public UBlueprintAsyncActionBase
 {

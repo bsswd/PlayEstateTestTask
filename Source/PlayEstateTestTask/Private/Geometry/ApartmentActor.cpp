@@ -42,7 +42,7 @@ void AApartmentActor::Initialize(const FApartmentData& InData)
 {
     ApartmentData = InData;
 
-    if (bUseFocusPointAsActorLocation && !ApartmentData.CameraFocus.IsNearlyZero())
+    if (!ApartmentData.CameraFocus.IsNearlyZero())
     {
         SetActorLocation(ApartmentData.CameraFocus);
     }
@@ -187,33 +187,7 @@ void AApartmentActor::CreateDynamicMaterial()
 
 void AApartmentActor::ApplyScale()
 {
-    if (!Mesh || !bAutoScaleByArea)
-    {
-        return;
-    }
-
-    // Площадь в м².
-    // Корень из площади дает примерную сторону квадрата в метрах.
-    // Стандартный куб имеет размер 100 см = 1 м,
-    // поэтому масштаб равен примерно стороне в метрах.
-    float SideMeters = 3.f;
-
-    if (ApartmentData.Area > 0.f)
-    {
-        SideMeters = FMath::Sqrt(ApartmentData.Area);
-    }
-
-    SideMeters = FMath::Max(SideMeters, 1.f);
-
-    const float HeightScale = FMath::Max(ApartmentHeight / 100.f, 0.01f);
-
-    Mesh->SetRelativeScale3D(
-        FVector(
-            SideMeters,
-            SideMeters,
-            HeightScale
-        )
-    );
+    
 }
 
 void AApartmentActor::HandleMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed)

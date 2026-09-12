@@ -1,6 +1,5 @@
 ﻿// Test task for Playestate.
 
-
 #pragma once
 
 #include "CoreMinimal.h"
