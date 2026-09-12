@@ -164,4 +164,6 @@ private:
     bool bTransitioning = false;
     bool bHasInitialBuildingView = false;
     bool bHasDoneFirstView = false;
+    
+    int32 LastFloorLevel = INDEX_NONE;
 };

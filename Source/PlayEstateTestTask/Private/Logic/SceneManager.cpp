@@ -186,7 +186,7 @@ void ASceneManager::UpdateApartmentInteraction()
 void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 {
 	UE_LOG(LogSceneManager, Warning, TEXT("UI: Select floor %d"), FloorLevel);
-
+	
 	if (MainWidget)
 	{
 		MainWidget->HideApartmentCard();
@@ -195,7 +195,7 @@ void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 	if (ACameraPawn* Camera = GetCameraPawn())
 	{
 		const FVector FloorTarget = ComputeFloorTarget(FloorLevel);
-		Camera->EnterFloor(FloorTarget, 1000.f, 0.f);
+		Camera->EnterFloor(FloorTarget, 0, 0);
 	}
 }
 

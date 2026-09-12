@@ -65,6 +65,7 @@ void ACameraPawn::BeginPlay()
     bHasDoneFirstView = true; 
 }
 
+
 void ACameraPawn::Transition(float DeltaTime)
 {
     TransitionTime += DeltaTime;
@@ -72,7 +73,6 @@ void ACameraPawn::Transition(float DeltaTime)
     const float Duration = FMath::Max(TransitionDuration, 0.05f);
     const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
 
-    // ИСПРАВЛЕНО: экспонента 2.f для плавного ease-in/out
     const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 2.f);
 
     CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
@@ -122,20 +122,16 @@ void ACameraPawn::SetBuildingView(const FVector& Center, float Distance)
     GenplanView.TargetPoint = BuildingCenter;
     GenplanView.Distance = BuildingDistance;
 
-    // ИСПРАВЛЕНО: если это первый вызов (история пуста) — просто ставим без прыжка.
-    // Если пользователь уже взаимодействовал — плавно перелетаем.
     if (!bTransitioning && CurrentMode == ECameraMode::Genplan)
     {
         if (History.Num() == 0 && !bHasDoneFirstView)
         {
-            // Первый запуск — мгновенно встаём на позицию без анимации.
             CurrentView = GenplanView;
             ApplyCamera();
             bHasDoneFirstView = true;
         }
         else
         {
-            // Повторный вызов — плавный переход.
             EnterGenplan();
         }
     }
@@ -143,7 +139,8 @@ void ACameraPawn::SetBuildingView(const FVector& Center, float Distance)
 
 void ACameraPawn::EnterGenplan()
 {
-    if (
+    if
+    (
         (!bTransitioning && CurrentMode == ECameraMode::Genplan) ||
         (bTransitioning && TargetMode == ECameraMode::Genplan)
     )
@@ -162,8 +159,11 @@ void ACameraPawn::EnterFloor(const FVector& Target, float Distance, float Pitch)
         Distance = 2000.f;
     }
 
-    const bool bAlreadySame = (!bTransitioning && CurrentMode == ECameraMode::Floor && FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f))||
-                                (bTransitioning &&  TargetMode == ECameraMode::Floor && FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
+    const bool bAlreadySame =
+        (!bTransitioning && CurrentMode == ECameraMode::Floor &&
+         FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f)) ||
+        (bTransitioning && TargetMode == ECameraMode::Floor &&
+         FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
 
     if (bAlreadySame)
     {
@@ -176,7 +176,11 @@ void ACameraPawn::EnterFloor(const FVector& Target, float Distance, float Pitch)
     NewView.Yaw = CurrentView.Yaw;
     NewView.Pitch = Pitch;
 
-    PushHistory(CurrentMode, CurrentView);
+    if (CurrentMode != ECameraMode::Floor)
+    {
+        PushHistory(CurrentMode, CurrentView);
+    }
+
     StartTransition(NewView, ECameraMode::Floor);
 }
 
@@ -188,12 +192,9 @@ void ACameraPawn::EnterApartment(const FVector& FocusPoint, float Distance, floa
     }
 
     const bool bAlreadySame =
-        (!bTransitioning &&
-         CurrentMode == ECameraMode::Apartment &&
-         FVector::DistSquared(CurrentView.TargetPoint, FocusPoint) < FMath::Square(10.f))
-        ||
-        (bTransitioning &&
-         TargetMode == ECameraMode::Apartment &&
+        (!bTransitioning && CurrentMode == ECameraMode::Apartment &&
+         FVector::DistSquared(CurrentView.TargetPoint, FocusPoint) < FMath::Square(10.f)) ||
+        (bTransitioning && TargetMode == ECameraMode::Apartment &&
          FVector::DistSquared(TargetView.TargetPoint, FocusPoint) < FMath::Square(10.f));
 
     if (bAlreadySame)
@@ -207,7 +208,11 @@ void ACameraPawn::EnterApartment(const FVector& FocusPoint, float Distance, floa
     NewView.Yaw = CurrentView.Yaw;
     NewView.Pitch = Pitch;
 
-    PushHistory(CurrentMode, CurrentView);
+    if (CurrentMode != ECameraMode::Apartment)
+    {
+        PushHistory(CurrentMode, CurrentView);
+    }
+
     StartTransition(NewView, ECameraMode::Apartment);
 }
 
