@@ -238,6 +238,14 @@ bool ACameraPawn::IsTransitioning() const
     return bTransitioning;
 }
 
+void ACameraPawn::EnterFloorView(const FVector& FloorCenter)
+{
+    FVector TargetPoint = FloorCenter;
+    TargetPoint.Z += FloorViewParams.TargetZOffset;
+
+    EnterFloor(TargetPoint, FloorViewParams.Distance, FloorViewParams.Pitch);
+}
+
 bool ACameraPawn::UpdateGenplanInput(float DeltaTime)
 {
     APlayerController* PlayerController = Cast<APlayerController>(GetController());

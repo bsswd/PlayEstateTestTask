@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CameraLookSettings.h"
 #include "GameFramework/Pawn.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
@@ -93,6 +94,9 @@ public:
     UFUNCTION(BlueprintCallable)
     bool IsTransitioning() const;
     
+    UFUNCTION(BlueprintCallable)
+    void EnterFloorView(const FVector& FloorCenter);
+    
     
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -100,6 +104,9 @@ public:
 
     
 protected:
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FOrbitViewParams FloorViewParams;
+    
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<USceneComponent> Root;
 
