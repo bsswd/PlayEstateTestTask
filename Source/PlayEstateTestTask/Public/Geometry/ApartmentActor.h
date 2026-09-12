@@ -1,8 +1,6 @@
 ﻿//  Test task for Playestate.
 
-
 #pragma once
-
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
@@ -23,17 +21,14 @@ class AApartmentActor : public AActor
 public:
     AApartmentActor();
     
-    // Событие для контроллера, камеры, UI и.т.д...
     UPROPERTY(BlueprintAssignable, Category = "Apartment")
     FOnApartmentClicked OnApartmentClicked;
-
     
-    // Инициализация.
     UFUNCTION(BlueprintCallable)
     void Initialize(const FApartmentData& InData);
 
     UFUNCTION(BlueprintCallable)
-    FApartmentData GetApartmentData() const;
+    FApartmentData GetApartmentData() const {return ApartmentData;}
 
     UFUNCTION(BlueprintCallable)
     void SetStatus(EApartmentStatus NewStatus);
@@ -65,22 +60,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
     FApartmentData ApartmentData;
 
-    // Если включено, актер поставит себя в FocusPoint из JSON.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
-    bool bUseFocusPointAsActorLocation = true;
-
-    // Если включено, размер куба будет примерно зависеть от площади.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
-    bool bAutoScaleByArea = true;
-
-    // Высота куба.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Data")
-    float ApartmentHeight = 250.f;
-
     // Материал с параметрами: BaseColor, EmissiveColor, EmissiveStrength.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Appearance")
     TObjectPtr<UMaterialInterface> BaseMaterial;
 
+    // Цвета отвечающие за визуальное представление в 3D мире.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Appearance")
     FLinearColor FreeColor = FLinearColor(0.75f, 0.8f, 0.85f, 1.f);
 
@@ -99,11 +83,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Appearance")
     float SelectedEmissiveStrength = 2.5f;
 
-    // Разрешено ли наводить/клики по квартире.
+    // Разрешен ли клик по квартире.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Interaction")
     bool bInteractionEnabled = true;
 
-    
+    // Обработчки клика и ховера.
     UFUNCTION()
     void HandleMeshClicked(UPrimitiveComponent* TouchedComponent, FKey ButtonPressed);
 

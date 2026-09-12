@@ -1,10 +1,8 @@
 ﻿//  Test task for Playestate.
 
-
 #include "Geometry/ApartmentActor.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/StaticMesh.h"
-
 
 AApartmentActor::AApartmentActor()
 {
@@ -13,7 +11,6 @@ AApartmentActor::AApartmentActor()
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     SetRootComponent(Mesh);
 
-    // Стандартный куб.
     static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshFinder(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
 
     if (CubeMeshFinder.Succeeded())
@@ -21,15 +18,12 @@ AApartmentActor::AApartmentActor()
         Mesh->SetStaticMesh(CubeMeshFinder.Object);
     }
 
-    // Дефолтный размер квартиры.
     Mesh->SetRelativeScale3D(FVector(4.f, 4.f, 2.5f));
 
-    // Ховер и клики мыши.
     Mesh->SetGenerateOverlapEvents(true);
     Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     Mesh->SetCollisionResponseToAllChannels(ECR_Overlap);
 
-    // События мыши.
     Mesh->OnClicked.AddDynamic(this, &AApartmentActor::HandleMeshClicked);
     Mesh->OnBeginCursorOver.AddDynamic(this, &AApartmentActor::HandleMeshBeginCursorOver);
     Mesh->OnEndCursorOver.AddDynamic(this, &AApartmentActor::HandleMeshEndCursorOver);
@@ -56,11 +50,6 @@ void AApartmentActor::Initialize(const FApartmentData& InData)
     ApplyScale();
     CreateDynamicMaterial();
     RefreshVisual();
-}
-
-FApartmentData AApartmentActor::GetApartmentData() const
-{
-    return ApartmentData;
 }
 
 void AApartmentActor::SetStatus(EApartmentStatus NewStatus)

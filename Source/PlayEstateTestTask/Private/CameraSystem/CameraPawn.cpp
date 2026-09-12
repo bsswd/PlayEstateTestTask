@@ -1,9 +1,10 @@
 ﻿//  Test task for Playestate.
 
-
 #include "CameraSystem/CameraPawn.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogCameraPawn, Log, All);
 
 ACameraPawn::ACameraPawn()
 {
@@ -31,6 +32,7 @@ void ACameraPawn::PossessedBy(AController* NewController)
 
     if (!PlayerController)
     {
+        UE_LOG(LogCameraPawn, Error, TEXT("PlayerController is NULL"));
         return;
     }
 
@@ -44,6 +46,7 @@ void ACameraPawn::BeginPlay()
 {
     Super::BeginPlay();
 
+    // Устанавливаем дефолтную точку обзора.
     if (!bHasInitialBuildingView)
     {
         BuildingCenter = FVector(0.f, 0.f, 1000.f);
@@ -66,8 +69,8 @@ void ACameraPawn::Transition(float DeltaTime)
     TransitionTime += DeltaTime;
 
     const float Duration = FMath::Max(TransitionDuration, 0.05f);
-    const float Alpha01 = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
-    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, Alpha01, 0.f);
+    const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
+    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 0.f);
 
     CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
     CurrentView.Distance = FMath::Lerp(StartView.Distance, TargetView.Distance, Alpha);
@@ -76,7 +79,7 @@ void ACameraPawn::Transition(float DeltaTime)
 
     ApplyCamera();
 
-    if (Alpha01 >= 1.f)
+    if (AlphaClamp >= 1.f)
     {
         bTransitioning = false;
         CurrentMode = TargetMode;
@@ -100,9 +103,7 @@ void ACameraPawn::Tick(float DeltaTime)
 
     if (CurrentMode == ECameraMode::Genplan)
     {
-        const bool bChanged = UpdateGenplanInput(DeltaTime);
-
-        if (bChanged)
+        if (UpdateGenplanInput(DeltaTime))
         {
             ApplyCamera();
         }
@@ -135,10 +136,8 @@ void ACameraPawn::EnterGenplan()
         return;
     }
 
-    FCameraView NewView = GenplanView;
-
     PushHistory(CurrentMode, CurrentView);
-    StartTransition(NewView, ECameraMode::Genplan);
+    StartTransition(GenplanView, ECameraMode::Genplan);
 }
 
 void ACameraPawn::EnterFloor(const FVector& Target, float Distance, float Pitch)
@@ -148,14 +147,8 @@ void ACameraPawn::EnterFloor(const FVector& Target, float Distance, float Pitch)
         Distance = 2000.f;
     }
 
-    const bool bAlreadySame =
-        (!bTransitioning &&
-         CurrentMode == ECameraMode::Floor &&
-         FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f))
-        ||
-        (bTransitioning &&
-         TargetMode == ECameraMode::Floor &&
-         FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
+    const bool bAlreadySame = (!bTransitioning && CurrentMode == ECameraMode::Floor && FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f))||
+                                (bTransitioning &&  TargetMode == ECameraMode::Floor && FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
 
     if (bAlreadySame)
     {
@@ -276,7 +269,6 @@ void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMod
 
     ClampView(TargetView);
 
-    // Кратчайший поворот по Yaw, чтобы камера не делала лишний круг.
     const float StartYawRad = FMath::DegreesToRadians(StartView.Yaw);
     const float TargetYawRad = FMath::DegreesToRadians(TargetView.Yaw);
     const float DeltaYawRad = FMath::FindDeltaAngleRadians(StartYawRad, TargetYawRad);
@@ -311,6 +303,7 @@ void ACameraPawn::ApplyCamera()
 {
     if (!Camera)
     {
+        UE_LOG(LogCameraPawn, Warning, TEXT("Camera is not set"));
         return;
     }
 

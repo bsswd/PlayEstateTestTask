@@ -1,6 +1,5 @@
 ﻿//  Test task for Playestate.
 
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -66,22 +65,19 @@ class ACameraPawn : public APawn
 public:
     ACameraPawn();
 
-    virtual void Tick(float DeltaTime) override;
-    virtual void PossessedBy(AController* NewController) override;
-
-    // Задать центр здания и дистанцию для Genplan.
+    // Задать центр здания и дистанцию для генплана.
     UFUNCTION(BlueprintCallable)
     void SetBuildingView(const FVector& Center, float Distance);
 
-    // Перейти к генплану.
+    // Переход к генплану.
     UFUNCTION(BlueprintCallable)
     void EnterGenplan();
 
-    // Перейти к этажу.
+    // Переход к этажу.
     UFUNCTION(BlueprintCallable)
     void EnterFloor(const FVector& Target, float Distance, float Pitch);
 
-    // Перейти к квартире.
+    // Переход к квартире.
     UFUNCTION(BlueprintCallable)
     void EnterApartment(const FVector& FocusPoint, float Distance, float Pitch);
 
@@ -93,20 +89,17 @@ public:
     UFUNCTION(BlueprintCallable)
     ECameraMode GetCameraMode() const;
 
-    // Идет ли сейчас перелет.
+    // Идет ли сейчас переход.
     UFUNCTION(BlueprintCallable)
     bool IsTransitioning() const;
-
-protected:
+    
+    
     virtual void BeginPlay() override;
-    void Transition(float DeltaTime);
+    virtual void Tick(float DeltaTime) override;
+    virtual void PossessedBy(AController* NewController) override;
 
-    void ApplyCamera();
-    void ClampView(FCameraView& View) const;
-    void StartTransition(const FCameraView& NewView, ECameraMode NewMode);
-    void PushHistory(ECameraMode Mode, const FCameraView& View);
-    bool UpdateGenplanInput(float DeltaTime);
-
+    
+protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<USceneComponent> Root;
 
@@ -116,11 +109,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float TransitionDuration = 0.8f;
 
-    // Скорость вращения в Genplan, градусы/сек.
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float OrbitSpeed = 90.f;
 
-    // Скорость вертикального перемещения в Genplan, юниты/сек.
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float VerticalSpeed = 500.f;
 
@@ -145,6 +136,15 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     int32 MaxHistoryCount = 8;
 
+    
+    void Transition(float DeltaTime);
+    void ApplyCamera();
+    void ClampView(FCameraView& View) const;
+    void StartTransition(const FCameraView& NewView, ECameraMode NewMode);
+    void PushHistory(ECameraMode Mode, const FCameraView& View);
+    bool UpdateGenplanInput(float DeltaTime);
+    
+
 private:
     ECameraMode CurrentMode = ECameraMode::Genplan;
     ECameraMode TargetMode = ECameraMode::Genplan;
@@ -157,10 +157,10 @@ private:
     TArray<FCameraHistoryEntry> History;
 
     FVector BuildingCenter = FVector::ZeroVector;
+    
     float BuildingDistance = 3000.f;
-
     float TransitionTime = 0.f;
-
+    
     bool bTransitioning = false;
     bool bHasInitialBuildingView = false;
 };
