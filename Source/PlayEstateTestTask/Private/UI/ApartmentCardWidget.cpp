@@ -42,7 +42,7 @@ void UApartmentCardWidget::SetupCard(const FApartmentData& InApartmentData)
 	
 	ApartmentAreaText->SetText(FText::FromString(FString::Printf(TEXT("%.2f м²"), InApartmentData.Area)));
 
-	if (ApartmentStatusText)
+	if (!ApartmentStatusText)
 	{
 		UE_LOG(LogApartmentCardWidget, Error, TEXT("ApartmentStatusText is NULL"));
 		return;
