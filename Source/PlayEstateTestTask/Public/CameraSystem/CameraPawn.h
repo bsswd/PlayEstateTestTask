@@ -83,6 +83,10 @@ public:
     void EnterApartment(const FVector& FocusPoint, float Distance, float Pitch);
     
     UFUNCTION(BlueprintCallable)
+    void EnterApartmentView(const FVector& ApartmentLocation);
+
+    
+    UFUNCTION(BlueprintCallable)
     void EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint);
 
     // Переход на шаг назад.
@@ -109,6 +113,20 @@ public:
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOrbitViewParams FloorViewParams;
+    
+    
+    // Параметры вида для квартиры (одинаковы для всех квартир)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    float ApartmentViewDistance = 1000.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    float ApartmentViewPitch = -35.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    float ApartmentViewYaw = 225.f;  // "слева сверху": 225° = слева сзади
+    
+    
+    
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<USceneComponent> Root;

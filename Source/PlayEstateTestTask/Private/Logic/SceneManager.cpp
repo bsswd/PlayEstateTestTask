@@ -186,58 +186,61 @@ void ASceneManager::HandleBackRequested()
 
 void ASceneManager::HandleApartmentClicked(FApartmentData Apartment, bool bIsSelected)
 {	
-    if (bIsSelected)
-    {
-        AApartmentActor* TargetActor = nullptr;
-    	
-        for (AApartmentActor* ApartmentActor : SpawnedApartments)
-        {
-            if (ApartmentActor && ApartmentActor->GetData().ID == Apartment.ID)
-            {
-                TargetActor = ApartmentActor;
-                break;
-            }
-        }
+	if (bIsSelected)
+	{
+		AApartmentActor* TargetActor = nullptr;
 
-        if (!TargetActor) return;
-    	
-        // Снимаем выделение с предыдущей квартиры, если она была
-        if (CurrentSelectedApartment.IsValid() && CurrentSelectedApartment.Get() != TargetActor)
-            CurrentSelectedApartment->SetSelected(false);
+		for (AApartmentActor* ApartmentActor : SpawnedApartments)
+		{
+			if (ApartmentActor && ApartmentActor->GetData().ID == Apartment.ID)
+			{
+				TargetActor = ApartmentActor;
+				break;
+			}
+		}
 
-        // Выделяем новую и запоминаем
-        TargetActor->SetSelected(true);
-        CurrentSelectedApartment = TargetActor;
+		if (!TargetActor)
+		{
+			return;
+		}
 
-        // Перелёт камеры
-        if (ACameraPawn* CameraPawn = GetCameraPawn())
-        {
-            const float CoordinateScale = 2.f;
+		if (CurrentSelectedApartment.IsValid() && CurrentSelectedApartment.Get() != TargetActor)
+		{
+			CurrentSelectedApartment->SetSelected(false);
+		}
 
-            const FVector TargetPoint = TargetActor->GetActorLocation();
-            const FVector CameraPosition = Apartment.CameraFocus * CoordinateScale;
+		TargetActor->SetSelected(true);
+		CurrentSelectedApartment = TargetActor;
 
-            CameraPawn->EnterApartmentLookAt(CameraPosition, TargetPoint);
-        }
+		if (ACameraPawn* CameraPawn = GetCameraPawn())
+		{
+			// Позиция квартиры (куда смотрим)
+			const FVector ApartmentLocation = TargetActor->GetActorLocation();
 
-        if (MainWidget)
-            MainWidget->ShowApartmentCard(Apartment);
-    }
-	
-    else
-    {
-        // Клик по уже выбранной квартире — снимаем выделение
-        if (CurrentSelectedApartment.IsValid())
-        {
-            CurrentSelectedApartment->SetSelected(false);
-            CurrentSelectedApartment = nullptr;
-        }
+			// Камера встаёт слева сверху под углом 35° и смотрит на квартиру
+			CameraPawn->EnterApartmentView(ApartmentLocation);
+		}
 
-        if (MainWidget)
-            MainWidget->HideApartmentCard();
-    }
+		if (MainWidget)
+		{
+			MainWidget->ShowApartmentCard(Apartment);
+		}
+	}
+	else
+	{
+		if (CurrentSelectedApartment.IsValid())
+		{
+			CurrentSelectedApartment->SetSelected(false);
+			CurrentSelectedApartment = nullptr;
+		}
 
-    UpdateApartmentInteraction();
+		if (MainWidget)
+		{
+			MainWidget->HideApartmentCard();
+		}
+	}
+
+	UpdateApartmentInteraction();
 }
 
 void ASceneManager::HandleFilterChanged(bool bHideSold)

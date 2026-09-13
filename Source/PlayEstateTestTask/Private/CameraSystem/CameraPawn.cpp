@@ -217,6 +217,33 @@ void ACameraPawn::EnterApartment(const FVector& FocusPoint, float Distance, floa
     StartTransition(NewView, ECameraMode::Apartment);
 }
 
+void ACameraPawn::EnterApartmentView(const FVector& ApartmentLocation)
+{
+    const FVector TargetPoint = ApartmentLocation;
+
+    // Вычисляем позицию камеры на сфере вокруг квартиры:
+    // слева сверху под углом Pitch и Yaw
+    const FRotator OrbitRotation(ApartmentViewPitch, ApartmentViewYaw, 0.f);
+    const FVector ForwardVector = OrbitRotation.Vector();
+    const FVector CameraPosition = TargetPoint - ForwardVector * ApartmentViewDistance;
+
+    // Точная ориентация камеры на квартиру через LookAt
+    const FRotator LookRotation = UKismetMathLibrary::FindLookAtRotation(CameraPosition, TargetPoint);
+
+    FCameraView NewView;
+    NewView.TargetPoint = TargetPoint;
+    NewView.Distance = ApartmentViewDistance;
+    NewView.Yaw = LookRotation.Yaw;
+    NewView.Pitch = LookRotation.Pitch;
+
+    if (CurrentMode != ECameraMode::Apartment)
+    {
+        PushHistory(CurrentMode, CurrentView);
+    }
+
+    StartTransition(NewView, ECameraMode::Apartment);    
+}
+
 void ACameraPawn::EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint)
 {
     const float Distance = FVector::Dist(CameraPosition, TargetPoint);
