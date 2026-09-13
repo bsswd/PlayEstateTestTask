@@ -54,86 +54,55 @@ void ASceneManager::HandleJsonLoaded(const FBuildingConfig& Config, const TArray
 
 void ASceneManager::SpawnApartments()
 {
-    if (!ApartmentActorClass)
-    {
-        UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set."));
-        return;
-    }
-
     UWorld* World = GetWorld();
     if (!World)
     {
         UE_LOG(LogSceneManager, Error, TEXT("World is null."));
     	return;	
     }
+	
+    if (!ApartmentActorClass)
+    {
+        UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set."));
+        return;
+    }
 
     SpawnedApartments.Empty();
 
-    for (int32 FloorIndex = 0; FloorIndex < BuildingConfig.Floors.Num(); ++FloorIndex)
-    {
-        const FFloorData& Floor = BuildingConfig.Floors[FloorIndex];
-        const float FloorZ = BaseZ + FloorIndex * FloorHeightSpacing;
+	for (const FFloorData& Floor : BuildingConfig.Floors)
+	{
+		for (const FApartmentData& Apartment : Floor.Apartments)
+		{
+			FApartmentData ApartmentCopy = Apartment;
+			
+			const FVector SpawnLocation = Apartment.CameraFocus;
+			FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
-        // Размещаем квартиры сеткой 2x2 (или в ряд, если больше)
-        const float NumApartments = Floor.Apartments.Num();
-        const int32 GridSize = FMath::CeilToInt(FMath::Sqrt(NumApartments));
+			AApartmentActor* Actor = World->SpawnActorDeferred<AApartmentActor>(
+				ApartmentActorClass,
+				SpawnTransform,
+				this,
+				nullptr,
+				ESpawnActorCollisionHandlingMethod::AlwaysSpawn
+			);
 
-        for (int32 AptIndex = 0; AptIndex < NumApartments; ++AptIndex)
-        {
-            const FApartmentData& Apartment = Floor.Apartments[AptIndex];
+			if (!Actor)
+			{
+				UE_LOG(LogSceneManager, Error, TEXT("No apartment actor"));
+				return;
+			}
 
-            // Вычисляем позицию в сетке
-            const int32 Row = AptIndex / GridSize;
-            const int32 Col = AptIndex % GridSize;
+			Actor->Initialize(ApartmentCopy);
+			Actor->FinishSpawning(SpawnTransform);
+			Actor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClicked);
+			SpawnedApartments.Add(Actor);
+		}
+	}
 
-            // Центрируем сетку
-            const float OffsetX = (Col - (GridSize - 1) * 0.5f) * ApartmentSpacing;
-            const float OffsetY = (Row - (GridSize - 1) * 0.5f) * ApartmentSpacing;
+	UE_LOG(LogSceneManager, Warning, TEXT("Spawned %d apartments from JSON coordinates"), SpawnedApartments.Num());
 
-            FVector SpawnLocation(OffsetX, OffsetY, FloorZ);
-            FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
-
-            AApartmentActor* ApartmentActor = World->SpawnActorDeferred<AApartmentActor>(
-                ApartmentActorClass,
-                SpawnTransform,
-                this,
-                nullptr,
-                ESpawnActorCollisionHandlingMethod::AlwaysSpawn
-            );
-
-            if (!ApartmentActor)
-            {
-                UE_LOG(LogSceneManager, Error, TEXT("No apartment actor"));
-            	return;
-            }
-        	
-        	ApartmentActor->Initialize(Apartment);
-        	ApartmentActor->FinishSpawning(SpawnTransform);
-        	ApartmentActor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClicked);
-        	SpawnedApartments.Add(ApartmentActor);
-        }
-    }
-
-    UE_LOG(LogTemp, Warning, TEXT("Spawned %d apartments procedurally"), SpawnedApartments.Num());
-
-    // Центрируем камеру на здании
-    if (SpawnedApartments.Num() > 0)
-    {
-        FVector BuildingCenter = FVector::ZeroVector;
-        for (AApartmentActor* Apt : SpawnedApartments)
-        {
-            BuildingCenter += Apt->GetActorLocation();
-        }
-        BuildingCenter /= SpawnedApartments.Num();
-
-        if (ACameraPawn* Camera = GetCameraPawn())
-        {
-            const float BuildingRadius = 4000.f;
-            Camera->SetBuildingView(BuildingCenter, BuildingRadius);
-        }
-    }
-	
 	UpdateApartmentInteraction();
+    UE_LOG(LogTemp, Warning, TEXT("Spawned %d apartments procedurally"), SpawnedApartments.Num());
 }
 
 void ASceneManager::SetupUI()
