@@ -109,7 +109,7 @@ void ASceneManager::SpawnApartments()
         	
         	ApartmentActor->Initialize(Apartment);
         	ApartmentActor->FinishSpawning(SpawnTransform);
-        	ApartmentActor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClickedIn3D);
+        	ApartmentActor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClicked);
         	SpawnedApartments.Add(ApartmentActor);
         }
     }
@@ -187,11 +187,11 @@ void ASceneManager::UpdateApartmentInteraction()
 void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 {
 	UE_LOG(LogSceneManager, Warning, TEXT("UI: Select floor %d"), FloorLevel);
+	
+	ClearAllApartmentsSelection();
 
 	if (MainWidget)
-	{
 		MainWidget->HideApartmentCard();
-	}
 
 	if (ACameraPawn* Camera = GetCameraPawn())
 	{
@@ -205,61 +205,70 @@ void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 void ASceneManager::HandleBackRequested()
 {
 	UE_LOG(LogSceneManager, Warning, TEXT("UI: Back requested"));
+	
+	ClearAllApartmentsSelection();
 
 	if (MainWidget)
-	{
 		MainWidget->HideApartmentCard();
-	}
 
 	if (ACameraPawn* Camera = GetCameraPawn())
-	{
 		Camera->GoBack();
-	}
 }
 
-void ASceneManager::HandleApartmentClickedIn3D(FApartmentData Apartment, bool bIsSelected)
-{
-	if (bIsSelected)
-	{
-		AApartmentActor* TargetActor = nullptr;
-		
-		for (AApartmentActor* ApartmentActor : SpawnedApartments)
-		{
-			if (ApartmentActor && ApartmentActor->GetData().ID == Apartment.ID)
-			{
-				TargetActor = ApartmentActor;
-				break;
-			}
-		}
+void ASceneManager::HandleApartmentClicked(FApartmentData Apartment, bool bIsSelected)
+{	
+    if (bIsSelected)
+    {
+        AApartmentActor* TargetActor = nullptr;
+    	
+        for (AApartmentActor* ApartmentActor : SpawnedApartments)
+        {
+            if (ApartmentActor && ApartmentActor->GetData().ID == Apartment.ID)
+            {
+                TargetActor = ApartmentActor;
+                break;
+            }
+        }
 
-		if (ACameraPawn* CameraPawn = Cast<ACameraPawn>(GetCameraPawn()); TargetActor && CameraPawn)
-		{
-			const float CoordinateScale = 2.f;
-			
-			// Куда смотрим: позиция квартиры (из процедурного размещения)
-			const FVector TargetPoint = TargetActor->GetActorLocation();
-            
-			// Куда перемещаем камеру: позиция из JSON
-			const FVector CameraPosition = Apartment.CameraFocus * CoordinateScale;
-            
-			// Камера перелетает в точку из JSON и смотрит на квартиру
-			CameraPawn->EnterApartmentLookAt(CameraPosition, TargetPoint);
-		}
+        if (!TargetActor) return;
+    	
+        // Снимаем выделение с предыдущей квартиры, если она была
+        if (CurrentSelectedApartment.IsValid() && CurrentSelectedApartment.Get() != TargetActor)
+            CurrentSelectedApartment->SetSelected(false);
 
-		if (MainWidget)
-		{
-			MainWidget->ShowApartmentCard(Apartment);
-		}
-	}
-	else
-	{
-		if (MainWidget)
-		{
-			MainWidget->HideApartmentCard();
-		}
-	}
+        // Выделяем новую и запоминаем
+        TargetActor->SetSelected(true);
+        CurrentSelectedApartment = TargetActor;
+
+        // Перелёт камеры
+        if (ACameraPawn* CameraPawn = GetCameraPawn())
+        {
+            const float CoordinateScale = 2.f;
+
+            const FVector TargetPoint = TargetActor->GetActorLocation();
+            const FVector CameraPosition = Apartment.CameraFocus * CoordinateScale;
+
+            CameraPawn->EnterApartmentLookAt(CameraPosition, TargetPoint);
+        }
+
+        if (MainWidget)
+            MainWidget->ShowApartmentCard(Apartment);
+    }
 	
-	UpdateApartmentInteraction();
+    else
+    {
+        // Клик по уже выбранной квартире — снимаем выделение
+        if (CurrentSelectedApartment.IsValid())
+        {
+            CurrentSelectedApartment->SetSelected(false);
+            CurrentSelectedApartment = nullptr;
+        }
+
+        if (MainWidget)
+            MainWidget->HideApartmentCard();
+    }
+
+    UpdateApartmentInteraction();
 }
 
 void ASceneManager::HandleFilterChanged(bool bHideSold)
@@ -305,4 +314,20 @@ FVector ASceneManager::ComputeFloorTarget(int32 FloorLevel) const
 	}
 
 	return Target;
+}
+
+void ASceneManager::ClearAllApartmentsSelection()
+{
+	for (AApartmentActor* Apartment : SpawnedApartments)
+	{
+		if (!Apartment)
+		{
+			UE_LOG(LogSceneManager, Warning, TEXT("Apartment not found."));
+			continue;
+		}
+		
+		Apartment->SetSelected(false);
+	}
+
+	CurrentSelectedApartment = nullptr;
 }

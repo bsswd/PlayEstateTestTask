@@ -51,7 +51,7 @@ protected:
 	void HandleBackRequested();
 
 	UFUNCTION()
-	void HandleApartmentClickedIn3D(FApartmentData Apartment, bool bIsSelected);
+	void HandleApartmentClicked(FApartmentData Apartment, bool bIsSelected);
 	
 	UFUNCTION()
 	void HandleFilterChanged(bool bHideSold);
@@ -71,9 +71,10 @@ private:
 	TArray<AApartmentActor*> SpawnedApartments;
 	
 	bool bHideSoldFilterActive = false;
+	TWeakObjectPtr<AApartmentActor> CurrentSelectedApartment;
+	FBuildingConfig BuildingConfig;
 	
 	ACameraPawn* GetCameraPawn() const;
 	FVector ComputeFloorTarget(int32 FloorLevel) const;	
-	
-	FBuildingConfig BuildingConfig;
+	void ClearAllApartmentsSelection();
 };
