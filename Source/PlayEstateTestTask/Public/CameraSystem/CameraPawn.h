@@ -111,9 +111,14 @@ public:
 
     
 protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<USceneComponent> Root;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UCameraComponent> Camera;
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     FOrbitViewParams FloorViewParams;
-    
     
     // Параметры вида для квартиры (одинаковы для всех квартир)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
@@ -123,16 +128,7 @@ protected:
     float ApartmentViewPitch = -35.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
-    float ApartmentViewYaw = 225.f;  // "слева сверху": 225° = слева сзади
-    
-    
-    
-    
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    TObjectPtr<USceneComponent> Root;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    TObjectPtr<UCameraComponent> Camera;
+    float ApartmentViewYaw = 225.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float TransitionDuration = 0.8f;

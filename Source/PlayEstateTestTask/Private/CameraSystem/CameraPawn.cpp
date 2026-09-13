@@ -73,7 +73,6 @@ void ACameraPawn::Transition(float DeltaTime)
 
     const float Duration = FMath::Max(TransitionDuration, 0.05f);
     const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
-
     const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 2.f);
 
     CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
@@ -86,7 +85,6 @@ void ACameraPawn::Transition(float DeltaTime)
     if (AlphaClamp >= 1.f)
     {
         bTransitioning = false;
-        CurrentMode = TargetMode;
 
         if (CurrentMode == ECameraMode::Genplan)
         {
@@ -373,18 +371,7 @@ void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMod
     TransitionTime = 0.f;
     bTransitioning = true;
     
-    // Log
-    const FVector StartCamPos = ComputeCameraLocation(StartView);
-    const FVector TargetCamPos = ComputeCameraLocation(TargetView);
-    UE_LOG(LogCameraPawn, Warning, TEXT("=== CAMERA TRANSITION START ==="));
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Mode: %d -> %d"), static_cast<int32>(CurrentMode), static_cast<int32>(NewMode));
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Camera FROM: %s"), *StartCamPos.ToString());
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Camera TO:   %s"), *TargetCamPos.ToString());
-    UE_LOG(LogCameraPawn, Warning, TEXT("  TargetPoint: %s"), *TargetView.TargetPoint.ToString());
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Distance:    %.1f"), TargetView.Distance);
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Yaw: %.1f -> %.1f"), StartView.Yaw, TargetView.Yaw);
-    UE_LOG(LogCameraPawn, Warning, TEXT("  Pitch: %.1f -> %.1f"), StartView.Pitch, TargetView.Pitch);
-    UE_LOG(LogCameraPawn, Warning, TEXT("==============================="));
+    CurrentMode = NewMode;    
 }
 
 void ACameraPawn::PushHistory(ECameraMode Mode, const FCameraView& View)

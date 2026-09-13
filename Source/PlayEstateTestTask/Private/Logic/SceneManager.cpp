@@ -55,6 +55,7 @@ void ASceneManager::HandleJsonLoaded(const FBuildingConfig& Config, const TArray
 void ASceneManager::SpawnApartments()
 {
     UWorld* World = GetWorld();
+	
     if (!World)
     {
         UE_LOG(LogSceneManager, Error, TEXT("World is null."));
@@ -78,7 +79,7 @@ void ASceneManager::SpawnApartments()
 			const FVector SpawnLocation = Apartment.CameraFocus;
 			FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
-			AApartmentActor* Actor = World->SpawnActorDeferred<AApartmentActor>(
+			AApartmentActor* ApartmentActor = World->SpawnActorDeferred<AApartmentActor>(
 				ApartmentActorClass,
 				SpawnTransform,
 				this,
@@ -86,23 +87,22 @@ void ASceneManager::SpawnApartments()
 				ESpawnActorCollisionHandlingMethod::AlwaysSpawn
 			);
 
-			if (!Actor)
+			if (!ApartmentActor)
 			{
 				UE_LOG(LogSceneManager, Error, TEXT("No apartment actor"));
 				return;
 			}
 
-			Actor->Initialize(ApartmentCopy);
-			Actor->FinishSpawning(SpawnTransform);
-			Actor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClicked);
-			SpawnedApartments.Add(Actor);
+			ApartmentActor->Initialize(ApartmentCopy);
+			ApartmentActor->FinishSpawning(SpawnTransform);
+			ApartmentActor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClicked);
+			SpawnedApartments.Add(ApartmentActor);
 		}
 	}
 
 	UE_LOG(LogSceneManager, Warning, TEXT("Spawned %d apartments from JSON coordinates"), SpawnedApartments.Num());
 
 	UpdateApartmentInteraction();
-    UE_LOG(LogTemp, Warning, TEXT("Spawned %d apartments procedurally"), SpawnedApartments.Num());
 }
 
 void ASceneManager::SetupUI()
@@ -182,6 +182,8 @@ void ASceneManager::HandleBackRequested()
 
 	if (ACameraPawn* Camera = GetCameraPawn())
 		Camera->GoBack();
+	
+	UpdateApartmentInteraction();
 }
 
 void ASceneManager::HandleApartmentClicked(FApartmentData Apartment, bool bIsSelected)
