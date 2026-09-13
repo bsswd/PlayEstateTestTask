@@ -21,15 +21,14 @@ void ASceneManager::BeginPlay()
 	
 	UJsonLoader* Loader = UJsonLoader::LoadBuildingConfigAsync(this, JsonFilePath);
 	
-	if (Loader)
-	{
-		Loader->OnCompleted.AddDynamic(this, &ASceneManager::HandleJsonLoaded);
-		Loader->Activate();
-	}
-	else
+	if (!Loader)
 	{
 		UE_LOG(LogSceneManager, Error, TEXT("Failed to create JsonLoader"));
+		return;
 	}
+	
+	Loader->OnCompleted.AddDynamic(this, &ASceneManager::HandleJsonLoaded);
+	Loader->Activate();
 }
 
 void ASceneManager::HandleJsonLoaded(const FBuildingConfig& Config, const TArray<FString>& Errors)
@@ -41,7 +40,7 @@ void ASceneManager::HandleJsonLoaded(const FBuildingConfig& Config, const TArray
 
 	if (Config.Floors.Num() == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("No floors loaded! Abort."));
+		UE_LOG(LogTemp, Error, TEXT("No floors loaded!"));
 		return;
 	}
 
@@ -57,24 +56,23 @@ void ASceneManager::SpawnApartments()
 {
     if (!ApartmentActorClass)
     {
-        UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set"));
+        UE_LOG(LogSceneManager, Error, TEXT("ApartmentActorClass is not set."));
         return;
     }
 
     UWorld* World = GetWorld();
-    if (!World) return;
+    if (!World)
+    {
+        UE_LOG(LogSceneManager, Error, TEXT("World is null."));
+    	return;	
+    }
 
     SpawnedApartments.Empty();
-
-    // Настройки размещения
-    const float FloorHeightSpacing = 400.f;  // Высота между этажами (4 метра)
-    const float ApartmentSpacing = 600.f;     // Расстояние между квартирами (6 метров)
-    const float BaseFloorZ = 200.f;           // Высота первого этажа
 
     for (int32 FloorIndex = 0; FloorIndex < BuildingConfig.Floors.Num(); ++FloorIndex)
     {
         const FFloorData& Floor = BuildingConfig.Floors[FloorIndex];
-        const float FloorZ = BaseFloorZ + FloorIndex * FloorHeightSpacing;
+        const float FloorZ = BaseZ + FloorIndex * FloorHeightSpacing;
 
         // Размещаем квартиры сеткой 2x2 (или в ряд, если больше)
         const float NumApartments = Floor.Apartments.Num();
@@ -95,7 +93,7 @@ void ASceneManager::SpawnApartments()
             FVector SpawnLocation(OffsetX, OffsetY, FloorZ);
             FTransform SpawnTransform(FRotator::ZeroRotator, SpawnLocation);
 
-            AApartmentActor* Actor = World->SpawnActorDeferred<AApartmentActor>(
+            AApartmentActor* ApartmentActor = World->SpawnActorDeferred<AApartmentActor>(
                 ApartmentActorClass,
                 SpawnTransform,
                 this,
@@ -103,13 +101,16 @@ void ASceneManager::SpawnApartments()
                 ESpawnActorCollisionHandlingMethod::AlwaysSpawn
             );
 
-            if (Actor)
+            if (!ApartmentActor)
             {
-                Actor->Initialize(Apartment);
-                Actor->FinishSpawning(SpawnTransform);
-                Actor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClickedIn3D);
-                SpawnedApartments.Add(Actor);
+                UE_LOG(LogSceneManager, Error, TEXT("No apartment actor"));
+            	return;
             }
+        	
+        	ApartmentActor->Initialize(Apartment);
+        	ApartmentActor->FinishSpawning(SpawnTransform);
+        	ApartmentActor->OnApartmentClicked.AddDynamic(this, &ASceneManager::HandleApartmentClickedIn3D);
+        	SpawnedApartments.Add(ApartmentActor);
         }
     }
 
@@ -163,8 +164,8 @@ void ASceneManager::SetupUI()
 
 void ASceneManager::UpdateApartmentInteraction()
 {
-	ACameraPawn* Camera = GetCameraPawn();
-	const ECameraMode Mode = Camera ? Camera->GetCameraMode() : ECameraMode::Genplan;
+	ACameraPawn* CameraPawn = GetCameraPawn();
+	const ECameraMode Mode = CameraPawn ? CameraPawn->GetCameraMode() : ECameraMode::Genplan;
 	const bool bInGenplan = (Mode == ECameraMode::Genplan);
 
 	for (AApartmentActor* Apartment : SpawnedApartments)
@@ -197,6 +198,8 @@ void ASceneManager::HandleFloorSelected(int32 FloorLevel)
 		const FVector FloorCenter = ComputeFloorTarget(FloorLevel);
 		Camera->EnterFloorView(FloorCenter);
 	}
+	
+	UpdateApartmentInteraction();
 }
 
 void ASceneManager::HandleBackRequested()
@@ -219,19 +222,28 @@ void ASceneManager::HandleApartmentClickedIn3D(FApartmentData Apartment, bool bI
 	if (bIsSelected)
 	{
 		AApartmentActor* TargetActor = nullptr;
-		for (AApartmentActor* Actor : SpawnedApartments)
+		
+		for (AApartmentActor* ApartmentActor : SpawnedApartments)
 		{
-			if (Actor && Actor->GetData().ID == Apartment.ID)
+			if (ApartmentActor && ApartmentActor->GetData().ID == Apartment.ID)
 			{
-				TargetActor = Actor;
+				TargetActor = ApartmentActor;
 				break;
 			}
 		}
 
 		if (ACameraPawn* CameraPawn = Cast<ACameraPawn>(GetCameraPawn()); TargetActor && CameraPawn)
 		{
-			const FVector FocusPoint = TargetActor->GetActorLocation();
-			CameraPawn->EnterApartment(FocusPoint, 1200.f, -20.f);
+			const float CoordinateScale = 2.f;
+			
+			// Куда смотрим: позиция квартиры (из процедурного размещения)
+			const FVector TargetPoint = TargetActor->GetActorLocation();
+            
+			// Куда перемещаем камеру: позиция из JSON
+			const FVector CameraPosition = Apartment.CameraFocus * CoordinateScale;
+            
+			// Камера перелетает в точку из JSON и смотрит на квартиру
+			CameraPawn->EnterApartmentLookAt(CameraPosition, TargetPoint);
 		}
 
 		if (MainWidget)
@@ -246,6 +258,8 @@ void ASceneManager::HandleApartmentClickedIn3D(FApartmentData Apartment, bool bI
 			MainWidget->HideApartmentCard();
 		}
 	}
+	
+	UpdateApartmentInteraction();
 }
 
 void ASceneManager::HandleFilterChanged(bool bHideSold)

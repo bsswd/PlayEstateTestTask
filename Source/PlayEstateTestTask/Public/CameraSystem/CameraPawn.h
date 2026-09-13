@@ -81,6 +81,9 @@ public:
     // Переход к квартире.
     UFUNCTION(BlueprintCallable)
     void EnterApartment(const FVector& FocusPoint, float Distance, float Pitch);
+    
+    UFUNCTION(BlueprintCallable)
+    void EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint);
 
     // Переход на шаг назад.
     UFUNCTION(BlueprintCallable)
@@ -173,4 +176,6 @@ private:
     bool bHasDoneFirstView = false;
     
     int32 LastFloorLevel = INDEX_NONE;
+    
+    FVector ComputeCameraLocation(const FCameraView& View) const;
 };

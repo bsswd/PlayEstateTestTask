@@ -33,7 +33,6 @@ void AApartmentActor::BeginPlay()
 {
     Super::BeginPlay();
 
-    ApplyScale();
     CreateDynamicMaterial();
     RefreshVisual();
 }
@@ -42,7 +41,6 @@ void AApartmentActor::Initialize(const FApartmentData& InData)
 {
     ApartmentData = InData;
 
-    ApplyScale();
     CreateDynamicMaterial();
     RefreshVisual();
 }
@@ -122,26 +120,32 @@ void AApartmentActor::RefreshVisual()
     static const FName EmissiveColorName(TEXT("EmissiveColor"));
     static const FName EmissiveStrengthName(TEXT("EmissiveStrength"));
 
-    if (bFilteredOut)
-    {
-        DynamicMaterial->SetVectorParameterValue(BaseColorName, FLinearColor(0.05f, 0.05f, 0.05f));
-        DynamicMaterial->SetVectorParameterValue(EmissiveColorName, FLinearColor::Black);
-        DynamicMaterial->SetScalarParameterValue(EmissiveStrengthName, 0.f);
-        return;
-    }
-
-    const bool bSold = ApartmentData.Status == EApartmentStatus::Sold;
-
-    FLinearColor BaseColor = bSold ? SoldColor : FreeColor;
+    // Базовый цвет: ВСЕ квартиры зелёные по умолчанию
+    FLinearColor BaseColor = FLinearColor(0.2f, 0.8f, 0.2f);  // зелёный
     FLinearColor EmissiveColor = FLinearColor::Black;
     float EmissiveStrength = 0.f;
 
+    // Если квартира отфильтрована (продана и фильтр включён) — затемняем
+    if (bFilteredOut)
+    {
+        BaseColor = FLinearColor(0.1f, 0.1f, 0.1f);  // тёмно-серый
+        EmissiveColor = FLinearColor::Black;
+        EmissiveStrength = 0.f;
+
+        DynamicMaterial->SetVectorParameterValue(BaseColorName, BaseColor);
+        DynamicMaterial->SetVectorParameterValue(EmissiveColorName, EmissiveColor);
+        DynamicMaterial->SetScalarParameterValue(EmissiveStrengthName, EmissiveStrength);
+        return;
+    }
+
+    // Подсветка ховера
     if (bHovered)
     {
         EmissiveColor = HoverEmissive;
         EmissiveStrength = HoverEmissiveStrength;
     }
 
+    // Подсветка выбора (приоритет выше ховера)
     if (bSelected)
     {
         EmissiveColor = SelectedEmissive;

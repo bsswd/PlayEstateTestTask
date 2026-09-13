@@ -20,6 +20,16 @@ class PLAYESTATETESTTASK_API ASceneManager : public AActor
 public:
 	ASceneManager();
 	
+	// Настройки для генерации 3D объектов
+	UPROPERTY(EditDefaultsOnly)
+	float FloorHeightSpacing = 500.f;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float ApartmentSpacing = 500.f;
+	
+	UPROPERTY(EditDefaultsOnly)
+	float BaseZ = 100.f;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AApartmentActor> ApartmentActorClass;
 

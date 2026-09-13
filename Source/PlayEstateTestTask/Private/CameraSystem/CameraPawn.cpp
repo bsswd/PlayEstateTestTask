@@ -3,6 +3,7 @@
 #include "CameraSystem/CameraPawn.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
+#include "Kismet/KismetMathLibrary.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogCameraPawn, Log, All);
 
@@ -216,6 +217,37 @@ void ACameraPawn::EnterApartment(const FVector& FocusPoint, float Distance, floa
     StartTransition(NewView, ECameraMode::Apartment);
 }
 
+void ACameraPawn::EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint)
+{
+    const float Distance = FVector::Dist(CameraPosition, TargetPoint);
+    if (Distance < KINDA_SMALL_NUMBER)
+    {
+        UE_LOG(LogCameraPawn, Warning, TEXT("CameraPosition == TargetPoint, skip."));
+        return;
+    }
+
+    // Вычисляем вращение камеры через LookAt:
+    // камера стоит в CameraPosition и смотрит на TargetPoint
+    const FRotator LookRotation = UKismetMathLibrary::FindLookAtRotation(CameraPosition, TargetPoint);
+
+    // Собираем вид камеры в орбитальной модели:
+    // TargetPoint = квартира (на что смотрим)
+    // Distance = расстояние от камеры до квартиры
+    // Yaw/Pitch = направление взгляда из LookAt
+    FCameraView NewView;
+    NewView.TargetPoint = TargetPoint;
+    NewView.Distance = Distance;
+    NewView.Yaw = LookRotation.Yaw;
+    NewView.Pitch = LookRotation.Pitch;
+
+    if (CurrentMode != ECameraMode::Apartment)
+    {
+        PushHistory(CurrentMode, CurrentView);
+    }
+
+    StartTransition(NewView, ECameraMode::Apartment);
+}
+
 void ACameraPawn::GoBack()
 {
     if (History.Num() == 0)
@@ -290,6 +322,13 @@ bool ACameraPawn::UpdateGenplanInput(float DeltaTime)
     return bChanged;
 }
 
+FVector ACameraPawn::ComputeCameraLocation(const FCameraView& View) const
+{
+    const FRotator Rotation(View.Pitch, View.Yaw, 0.f);
+    const FVector Forward = Rotation.Vector();
+    return View.TargetPoint - Forward * View.Distance;
+}
+
 void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMode)
 {
     StartView = CurrentView;
@@ -306,6 +345,19 @@ void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMod
     TargetMode = NewMode;
     TransitionTime = 0.f;
     bTransitioning = true;
+    
+    // Log
+    const FVector StartCamPos = ComputeCameraLocation(StartView);
+    const FVector TargetCamPos = ComputeCameraLocation(TargetView);
+    UE_LOG(LogCameraPawn, Warning, TEXT("=== CAMERA TRANSITION START ==="));
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Mode: %d -> %d"), static_cast<int32>(CurrentMode), static_cast<int32>(NewMode));
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Camera FROM: %s"), *StartCamPos.ToString());
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Camera TO:   %s"), *TargetCamPos.ToString());
+    UE_LOG(LogCameraPawn, Warning, TEXT("  TargetPoint: %s"), *TargetView.TargetPoint.ToString());
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Distance:    %.1f"), TargetView.Distance);
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Yaw: %.1f -> %.1f"), StartView.Yaw, TargetView.Yaw);
+    UE_LOG(LogCameraPawn, Warning, TEXT("  Pitch: %.1f -> %.1f"), StartView.Pitch, TargetView.Pitch);
+    UE_LOG(LogCameraPawn, Warning, TEXT("==============================="));
 }
 
 void ACameraPawn::PushHistory(ECameraMode Mode, const FCameraView& View)
