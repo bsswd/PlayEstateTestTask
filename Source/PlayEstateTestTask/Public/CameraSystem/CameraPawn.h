@@ -75,22 +75,19 @@ public:
 
     // Переход к этажу.
     UFUNCTION(BlueprintCallable)
-    void EnterFloor(const FVector& Target, float Distance, float Pitch);
+    void EnterFloorView(const FVector& FloorCenter);
 
     // Переход к квартире.
     UFUNCTION(BlueprintCallable)
-    void EnterApartment(const FVector& FocusPoint, float Distance, float Pitch);
-    
-    UFUNCTION(BlueprintCallable)
     void EnterApartmentView(const FVector& ApartmentLocation);
 
-    
+    // Вспомогательная функция для перехода
     UFUNCTION(BlueprintCallable)
-    void EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint);
-
+    void SetLookPoint(const FVector& Target, float Distance, float Pitch);
+    
     // Переход на шаг назад.
     UFUNCTION(BlueprintCallable)
-    void GoBack();
+    void StepBack();
 
     // Текущий режим камеры.
     UFUNCTION(BlueprintCallable)
@@ -99,10 +96,6 @@ public:
     // Идет ли сейчас переход.
     UFUNCTION(BlueprintCallable)
     bool IsTransitioning() const;
-    
-    UFUNCTION(BlueprintCallable)
-    void EnterFloorView(const FVector& FloorCenter);
-    
     
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaTime) override;
@@ -120,40 +113,41 @@ protected:
     FOrbitViewParams FloorViewParams;
     
     // Параметры вида для квартиры (одинаковы для всех квартир)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|ApartmentView")
     float ApartmentViewDistance = 1000.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|ApartmentView")
     float ApartmentViewPitch = -35.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Apartment")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|ApartmentView")
     float ApartmentViewYaw = 225.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    // Параметры для настройки перехода камеры.
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float TransitionDuration = 0.8f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float OrbitSpeed = 90.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float VerticalSpeed = 500.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MinPitch = -80.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MaxPitch = -5.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MinDistance = 300.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MaxDistance = 15000.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MinTargetZ = -2000.f;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|TransitionSettings")
     float MaxTargetZ = 15000.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)

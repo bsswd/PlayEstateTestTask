@@ -21,6 +21,7 @@ public:
 	 
 	
 	UFUNCTION(BlueprintCallable, meta=(BlueprintInternalUseOnly="true", WorldContext="WorldContextObject"), Category="JsonLoader")
+
 	static UJsonLoader* LoadBuildingConfigAsync(UObject* WorldContextObject, FString FileName);
  
 	virtual void Activate() override;

@@ -66,34 +66,6 @@ void ACameraPawn::BeginPlay()
     bHasDoneFirstView = true; 
 }
 
-
-void ACameraPawn::Transition(float DeltaTime)
-{
-    // Логика плавного перелета камеры.
-    TransitionTime += DeltaTime;
-
-    const float Duration = FMath::Max(TransitionDuration, 0.05f);
-    const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
-    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 2.f);
-
-    CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
-    CurrentView.Distance = FMath::Lerp(StartView.Distance, TargetView.Distance, Alpha);
-    CurrentView.Yaw = FMath::Lerp(StartView.Yaw, TargetView.Yaw, Alpha);
-    CurrentView.Pitch = FMath::Lerp(StartView.Pitch, TargetView.Pitch, Alpha);
-
-    ApplyCamera();
-
-    if (AlphaClamp >= 1.f)
-    {
-        bTransitioning = false;
-
-        if (CurrentMode == ECameraMode::Genplan)
-        {
-            GenplanView = CurrentView;
-        }
-    }
-}
-
 void ACameraPawn::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -143,56 +115,12 @@ void ACameraPawn::EnterGenplan()
     StartTransition(GenplanView, ECameraMode::Genplan);
 }
 
-void ACameraPawn::EnterFloor(const FVector& Target, float Distance, float Pitch)
+void ACameraPawn::EnterFloorView(const FVector& FloorCenter)
 {
-    if (Distance <= 0.f) Distance = 2000.f;
+    FVector TargetPoint = FloorCenter;
+    TargetPoint.Z += FloorViewParams.TargetZOffset;
 
-    const bool bAlreadySame =
-        (!bTransitioning && CurrentMode == ECameraMode::Floor &&
-         FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f)) ||
-        (bTransitioning && TargetMode == ECameraMode::Floor &&
-         FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
-
-    if (bAlreadySame) return;
-
-    FCameraView NewView;
-    NewView.TargetPoint = Target;
-    NewView.Distance = Distance;
-    NewView.Yaw = CurrentView.Yaw;
-    NewView.Pitch = Pitch;
-
-    if (CurrentMode != ECameraMode::Floor) PushHistory(CurrentMode, CurrentView);
-
-    StartTransition(NewView, ECameraMode::Floor);
-}
-
-void ACameraPawn::EnterApartment(const FVector& FocusPoint, float Distance, float Pitch)
-{
-    if (Distance <= 0.f) Distance = 1200.f;
-
-    const bool bAlreadySame =
-        (!bTransitioning && CurrentMode == ECameraMode::Apartment &&
-         FVector::DistSquared(CurrentView.TargetPoint, FocusPoint) < FMath::Square(10.f)) ||
-        (bTransitioning && TargetMode == ECameraMode::Apartment &&
-         FVector::DistSquared(TargetView.TargetPoint, FocusPoint) < FMath::Square(10.f));
-
-    if (bAlreadySame)
-    {
-        return;
-    }
-
-    FCameraView NewView;
-    NewView.TargetPoint = FocusPoint;
-    NewView.Distance = Distance;
-    NewView.Yaw = CurrentView.Yaw;
-    NewView.Pitch = Pitch;
-
-    if (CurrentMode != ECameraMode::Apartment)
-    {
-        PushHistory(CurrentMode, CurrentView);
-    }
-
-    StartTransition(NewView, ECameraMode::Apartment);
+    SetLookPoint(TargetPoint, FloorViewParams.Distance, FloorViewParams.Pitch);
 }
 
 void ACameraPawn::EnterApartmentView(const FVector& ApartmentLocation)
@@ -221,33 +149,30 @@ void ACameraPawn::EnterApartmentView(const FVector& ApartmentLocation)
     StartTransition(NewView, ECameraMode::Apartment);    
 }
 
-void ACameraPawn::EnterApartmentLookAt(const FVector& CameraPosition, const FVector& TargetPoint)
+void ACameraPawn::SetLookPoint(const FVector& Target, float Distance, float Pitch)
 {
-    const float Distance = FVector::Dist(CameraPosition, TargetPoint);
-    if (Distance < KINDA_SMALL_NUMBER)
-    {
-        UE_LOG(LogCameraPawn, Warning, TEXT("CameraPosition == TargetPoint, skip."));
-        return;
-    }
+    if (Distance <= 0.f) Distance = 2000.f;
 
-    // Вычисляем вращение камеры, камера стоит в CameraPosition и смотрит на TargetPoint
-    const FRotator LookRotation = UKismetMathLibrary::FindLookAtRotation(CameraPosition, TargetPoint);
+    const bool bAlreadySame =
+        (!bTransitioning && CurrentMode == ECameraMode::Floor &&
+         FVector::DistSquared(CurrentView.TargetPoint, Target) < FMath::Square(10.f)) ||
+        (bTransitioning && TargetMode == ECameraMode::Floor &&
+         FVector::DistSquared(TargetView.TargetPoint, Target) < FMath::Square(10.f));
+
+    if (bAlreadySame) return;
 
     FCameraView NewView;
-    NewView.TargetPoint = TargetPoint;
+    NewView.TargetPoint = Target;
     NewView.Distance = Distance;
-    NewView.Yaw = LookRotation.Yaw;
-    NewView.Pitch = LookRotation.Pitch;
+    NewView.Yaw = CurrentView.Yaw;
+    NewView.Pitch = Pitch;
 
-    if (CurrentMode != ECameraMode::Apartment)
-    {
-        PushHistory(CurrentMode, CurrentView);
-    }
+    if (CurrentMode != ECameraMode::Floor) PushHistory(CurrentMode, CurrentView);
 
-    StartTransition(NewView, ECameraMode::Apartment);
+    StartTransition(NewView, ECameraMode::Floor);
 }
 
-void ACameraPawn::GoBack()
+void ACameraPawn::StepBack()
 {
     if (History.Num() == 0)
     {
@@ -264,17 +189,56 @@ ECameraMode ACameraPawn::GetCameraMode() const
     return CurrentMode;
 }
 
+void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMode)
+{
+    StartView = CurrentView;
+    TargetView = NewView;
+
+    ClampView(TargetView);
+
+    const float StartYawRad = FMath::DegreesToRadians(StartView.Yaw);
+    const float TargetYawRad = FMath::DegreesToRadians(TargetView.Yaw);
+    const float DeltaYawRad = FMath::FindDeltaAngleRadians(StartYawRad, TargetYawRad);
+
+    TargetView.Yaw = StartView.Yaw + FMath::RadiansToDegrees(DeltaYawRad);
+
+    TargetMode = NewMode;
+    TransitionTime = 0.f;
+    bTransitioning = true;
+    
+    CurrentMode = NewMode;    
+}
+
+void ACameraPawn::Transition(float DeltaTime)
+{
+    // Логика плавного перелета камеры.
+    TransitionTime += DeltaTime;
+
+    const float Duration = FMath::Max(TransitionDuration, 0.05f);
+    const float AlphaClamp = FMath::Clamp(TransitionTime / Duration, 0.f, 1.f);
+    const float Alpha = FMath::InterpEaseInOut(0.f, 1.f, AlphaClamp, 2.f);
+
+    CurrentView.TargetPoint = FMath::Lerp(StartView.TargetPoint, TargetView.TargetPoint, Alpha);
+    CurrentView.Distance = FMath::Lerp(StartView.Distance, TargetView.Distance, Alpha);
+    CurrentView.Yaw = FMath::Lerp(StartView.Yaw, TargetView.Yaw, Alpha);
+    CurrentView.Pitch = FMath::Lerp(StartView.Pitch, TargetView.Pitch, Alpha);
+
+    ApplyCamera();
+
+    if (AlphaClamp >= 1.f)
+    {
+        bTransitioning = false;
+
+        if (CurrentMode == ECameraMode::Genplan)
+        {
+            GenplanView = CurrentView;
+        }
+    }
+}
+
 bool ACameraPawn::IsTransitioning() const
 {
     return bTransitioning;
-}
-
-void ACameraPawn::EnterFloorView(const FVector& FloorCenter)
-{
-    FVector TargetPoint = FloorCenter;
-    TargetPoint.Z += FloorViewParams.TargetZOffset;
-
-    EnterFloor(TargetPoint, FloorViewParams.Distance, FloorViewParams.Pitch);
 }
 
 bool ACameraPawn::UpdateGenplanInput(float DeltaTime)
@@ -326,26 +290,6 @@ FVector ACameraPawn::ComputeCameraLocation(const FCameraView& View) const
     const FRotator Rotation(View.Pitch, View.Yaw, 0.f);
     const FVector Forward = Rotation.Vector();
     return View.TargetPoint - Forward * View.Distance;
-}
-
-void ACameraPawn::StartTransition(const FCameraView& NewView, ECameraMode NewMode)
-{
-    StartView = CurrentView;
-    TargetView = NewView;
-
-    ClampView(TargetView);
-
-    const float StartYawRad = FMath::DegreesToRadians(StartView.Yaw);
-    const float TargetYawRad = FMath::DegreesToRadians(TargetView.Yaw);
-    const float DeltaYawRad = FMath::FindDeltaAngleRadians(StartYawRad, TargetYawRad);
-
-    TargetView.Yaw = StartView.Yaw + FMath::RadiansToDegrees(DeltaYawRad);
-
-    TargetMode = NewMode;
-    TransitionTime = 0.f;
-    bTransitioning = true;
-    
-    CurrentMode = NewMode;    
 }
 
 void ACameraPawn::PushHistory(ECameraMode Mode, const FCameraView& View)

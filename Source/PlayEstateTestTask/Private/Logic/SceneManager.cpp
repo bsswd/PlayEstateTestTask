@@ -181,7 +181,7 @@ void ASceneManager::HandleBackRequested()
 		MainWidget->HideApartmentCard();
 
 	if (ACameraPawn* Camera = GetCameraPawn())
-		Camera->GoBack();
+		Camera->StepBack();
 	
 	UpdateApartmentInteraction();
 }

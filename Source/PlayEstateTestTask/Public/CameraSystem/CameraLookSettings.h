@@ -20,7 +20,6 @@ struct FOrbitViewParams
     float Pitch = -35.f;
 
     // Смещение точки обзора по Z относительно центра.
-    // Например, 100 = камера смотрит чуть выше центра этажа.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "View")
     float TargetZOffset = 0.f;
 };
